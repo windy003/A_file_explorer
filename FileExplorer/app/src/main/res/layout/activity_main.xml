@@ -12,14 +12,29 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
+        android:padding="8dp"
+        android:scrollbars="none">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/breadcrumbRecyclerView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
     <TextView
         android:id="@+id/tvCurrentPath"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
+        android:padding="8dp"
         android:background="@color/background"
-        android:textSize="14sp"
-        android:textColor="@color/on_surface"
+        android:textSize="12sp"
+        android:textColor="@color/on_surface_variant"
         android:singleLine="true"
         android:ellipsize="start" />
 

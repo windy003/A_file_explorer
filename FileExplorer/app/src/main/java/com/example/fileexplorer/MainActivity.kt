@@ -34,10 +34,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var toolbar: MaterialToolbar
     private lateinit var currentPathTextView: TextView
+    private lateinit var breadcrumbRecyclerView: RecyclerView
     private lateinit var permissionLayout: LinearLayout
     private lateinit var grantPermissionButton: Button
     
     private lateinit var fileAdapter: FileAdapter
+    private lateinit var breadcrumbAdapter: BreadcrumbAdapter
     private var currentDirectory: File? = null
     
     companion object {
@@ -88,6 +90,7 @@ class MainActivity : AppCompatActivity() {
             recyclerView = findViewById(R.id.recyclerView)
             toolbar = findViewById(R.id.toolbar)
             currentPathTextView = findViewById(R.id.tvCurrentPath)
+            breadcrumbRecyclerView = findViewById(R.id.breadcrumbRecyclerView)
             permissionLayout = findViewById(R.id.permissionLayout)
             grantPermissionButton = findViewById(R.id.btnGrantPermission)
             
@@ -140,6 +143,8 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = fileAdapter
         }
+        
+        setupBreadcrumbRecyclerView()
     }
 
     private fun checkAndRequestPermissions() {
@@ -206,6 +211,17 @@ class MainActivity : AppCompatActivity() {
         loadFiles()
     }
 
+    private fun setupBreadcrumbRecyclerView() {
+        breadcrumbAdapter = BreadcrumbAdapter(mutableListOf()) { breadcrumb ->
+            navigateToDirectory(breadcrumb.file)
+        }
+        
+        breadcrumbRecyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.HORIZONTAL, false)
+            adapter = breadcrumbAdapter
+        }
+    }
+    
     private fun loadFiles() {
         try {
             val directory = currentDirectory ?: return
@@ -224,6 +240,9 @@ class MainActivity : AppCompatActivity() {
             fileAdapter.updateFiles(fileItems)
             currentPathTextView.text = directory.absolutePath
             
+            // 更新面包屑导航
+            updateBreadcrumbs(directory)
+            
             // 更新返回按钮状态
             val canGoUp = directory.parent != null
             supportActionBar?.setDisplayHomeAsUpEnabled(canGoUp)
@@ -232,6 +251,40 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error loading files", e)
             Toast.makeText(this, "无法加载文件: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun updateBreadcrumbs(directory: File) {
+        val breadcrumbs = mutableListOf<BreadcrumbItem>()
+        var current: File? = directory
+        val pathList = mutableListOf<File>()
+        
+        // 构建路径列表
+        while (current != null) {
+            pathList.add(current)
+            current = current.parentFile
+        }
+        
+        // 反转列表以获得正确的顺序
+        pathList.reverse()
+        
+        // 创建面包屑项目
+        for (i in pathList.indices) {
+            val file = pathList[i]
+            val name = if (i == 0) {
+                // 根目录显示为"根目录"
+                getString(R.string.root_directory)
+            } else {
+                file.name
+            }
+            breadcrumbs.add(BreadcrumbItem(name, file, i == pathList.size - 1))
+        }
+        
+        breadcrumbAdapter.updateBreadcrumbs(breadcrumbs)
+        
+        // 滚动到最后一个面包屑
+        if (breadcrumbs.isNotEmpty()) {
+            breadcrumbRecyclerView.scrollToPosition(breadcrumbs.size - 1)
         }
     }
 

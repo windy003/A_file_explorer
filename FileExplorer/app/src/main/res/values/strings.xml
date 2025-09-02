@@ -22,4 +22,5 @@
     <string name="paste_success">粘贴成功</string>
     <string name="paste_failed">粘贴失败</string>
     <string name="no_clipboard_content">剪贴板为空</string>
+    <string name="root_directory">根目录</string>
 </resources>
