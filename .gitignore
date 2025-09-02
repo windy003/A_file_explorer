@@ -1,0 +1,6 @@
+.claude/
+.idea/
+FileExplorer/.idea/
+FileExplorer/build/
+FileExplorer/app/build/
+FileExplorer/.gradle
