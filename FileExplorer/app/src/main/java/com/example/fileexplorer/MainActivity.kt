@@ -24,6 +24,10 @@ import android.widget.TextView
 import android.widget.LinearLayout
 import android.widget.Button
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class MainActivity : AppCompatActivity() {
 
@@ -280,6 +284,10 @@ class MainActivity : AppCompatActivity() {
         val popup = PopupMenu(this, view)
         popup.menuInflater.inflate(R.menu.file_options, popup.menu)
         
+        // 根据剪贴板状态启用/禁用粘贴选项
+        val pasteItem = popup.menu.findItem(R.id.action_paste)
+        pasteItem.isEnabled = ClipboardManager.hasCopiedFile()
+        
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_open -> {
@@ -292,6 +300,14 @@ class MainActivity : AppCompatActivity() {
                 }
                 R.id.action_rename -> {
                     showRenameDialog(fileItem)
+                    true
+                }
+                R.id.action_copy -> {
+                    copyFile(fileItem)
+                    true
+                }
+                R.id.action_paste -> {
+                    pasteFile()
                     true
                 }
                 R.id.action_delete -> {
@@ -393,6 +409,62 @@ class MainActivity : AppCompatActivity() {
                         recyclerView.visibility = View.GONE
                     }
                 }
+            }
+        }
+    }
+
+    private fun copyFile(fileItem: FileItem) {
+        ClipboardManager.copyFile(fileItem.file)
+        Toast.makeText(this, getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun pasteFile() {
+        val copiedFile = ClipboardManager.getCopiedFile()
+        if (copiedFile == null) {
+            Toast.makeText(this, getString(R.string.no_clipboard_content), Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        val currentDir = currentDirectory ?: return
+        val targetFile = File(currentDir, copiedFile.name)
+        
+        try {
+            if (copiedFile.isDirectory) {
+                copyDirectory(copiedFile, targetFile)
+            } else {
+                copyRegularFile(copiedFile, targetFile)
+            }
+            
+            loadFiles()
+            Toast.makeText(this, getString(R.string.paste_success), Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.paste_failed) + ": ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun copyRegularFile(source: File, target: File) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } else {
+            FileInputStream(source).use { input ->
+                FileOutputStream(target).use { output ->
+                    input.copyTo(output)
+                }
+            }
+        }
+    }
+    
+    private fun copyDirectory(source: File, target: File) {
+        if (!target.exists()) {
+            target.mkdirs()
+        }
+        
+        source.listFiles()?.forEach { file ->
+            val targetChild = File(target, file.name)
+            if (file.isDirectory) {
+                copyDirectory(file, targetChild)
+            } else {
+                copyRegularFile(file, targetChild)
             }
         }
     }
