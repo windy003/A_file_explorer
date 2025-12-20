@@ -7,7 +7,8 @@ data class FileItem(
     val name: String = file.name,
     val isDirectory: Boolean = file.isDirectory,
     val size: Long = if (file.isDirectory) 0 else file.length(),
-    val lastModified: Long = file.lastModified()
+    val lastModified: Long = file.lastModified(),
+    var isSelected: Boolean = false  // 多选模式下的选中状态
 ) {
     fun getDisplaySize(): String {
         if (isDirectory) return ""

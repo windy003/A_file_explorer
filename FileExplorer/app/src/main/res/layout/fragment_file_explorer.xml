@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
+        android:padding="8dp"
+        android:scrollbars="none">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/breadcrumbRecyclerView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/tvCurrentPath"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:background="@color/background"
+        android:textSize="12sp"
+        android:textColor="@color/on_surface_variant"
+        android:singleLine="true"
+        android:ellipsize="start" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/surface" />
+
+    <!-- 多选模式底部操作栏（初始隐藏） -->
+    <LinearLayout
+        android:id="@+id/multiSelectActionBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        android:background="#424242"
+        android:elevation="8dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/btnCopy"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="@string/copy"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:backgroundTint="#616161"
+            style="@style/Widget.MaterialComponents.Button" />
+
+        <Button
+            android:id="@+id/btnCut"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="@string/cut"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:backgroundTint="#616161"
+            style="@style/Widget.MaterialComponents.Button" />
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="@string/delete"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:backgroundTint="#F44336"
+            style="@style/Widget.MaterialComponents.Button" />
+
+        <Button
+            android:id="@+id/btnSelectAll"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_margin="4dp"
+            android:text="@string/select_all"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:backgroundTint="#616161"
+            style="@style/Widget.MaterialComponents.Button" />
+
+    </LinearLayout>
+
+</LinearLayout>
+
+<!-- 粘贴悬浮按钮（有剪贴板内容时显示，位于新建按钮上方） -->
+<com.google.android.material.floatingactionbutton.FloatingActionButton
+    android:id="@+id/fabPaste"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|end"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="88dp"
+    android:src="@android:drawable/ic_menu_save"
+    android:contentDescription="@string/paste"
+    app:tint="@android:color/white"
+    android:visibility="gone" />
+
+<!-- 新建按钮（始终显示） -->
+<com.google.android.material.floatingactionbutton.FloatingActionButton
+    android:id="@+id/fabAdd"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|end"
+    android:layout_margin="16dp"
+    android:src="@android:drawable/ic_input_add"
+    android:contentDescription="@string/create_new" />
+
+</FrameLayout>

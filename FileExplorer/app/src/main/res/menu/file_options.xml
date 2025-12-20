@@ -5,9 +5,13 @@
         android:title="@string/open" />
     
     <item
+        android:id="@+id/action_favorite"
+        android:title="@string/add_to_favorites" />
+
+    <item
         android:id="@+id/action_copy"
         android:title="@string/copy" />
-    
+
     <item
         android:id="@+id/action_paste"
         android:title="@string/paste" />
