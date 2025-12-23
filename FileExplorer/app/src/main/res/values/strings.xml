@@ -61,4 +61,8 @@
     <string name="folder_creation_failed">文件夹创建失败</string>
     <string name="file_creation_failed">文件创建失败</string>
     <string name="current_dir_not_available">当前目录不可用</string>
+
+    <!-- 存储空间信息相关 -->
+    <string name="loading_storage_info">加载存储信息中…</string>
+    <string name="storage_info">已占用 %s / 总共 %s</string>
 </resources>

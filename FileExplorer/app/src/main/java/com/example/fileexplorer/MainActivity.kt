@@ -15,6 +15,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -25,6 +26,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import android.os.StatFs
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
@@ -34,6 +36,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
     private lateinit var permissionLayout: LinearLayout
     private lateinit var grantPermissionButton: Button
+    private lateinit var storageInfoText: TextView
 
     private lateinit var pagerAdapter: TabPagerAdapter
     private lateinit var tabLayoutMediator: TabLayoutMediator
@@ -72,6 +75,7 @@ class MainActivity : AppCompatActivity() {
             viewPager = findViewById(R.id.viewPager)
             permissionLayout = findViewById(R.id.permissionLayout)
             grantPermissionButton = findViewById(R.id.btnGrantPermission)
+            storageInfoText = findViewById(R.id.storageInfoText)
 
             grantPermissionButton.setOnClickListener {
                 checkAndRequestPermissions()
@@ -195,6 +199,8 @@ class MainActivity : AppCompatActivity() {
         permissionLayout.visibility = View.GONE
         viewPager.visibility = View.VISIBLE
         // Fragment会在创建时自动加载文件，无需手动刷新
+        // 更新存储空间信息
+        updateStorageInfo()
     }
 
     override fun onRequestPermissionsResult(
@@ -292,5 +298,42 @@ class MainActivity : AppCompatActivity() {
     fun updateTabTitle(tabId: Int, title: String) {
         val tab = tabLayout.getTabAt(tabId)
         tab?.text = title
+    }
+
+    // 更新存储空间信息
+    private fun updateStorageInfo() {
+        try {
+            val path = Environment.getExternalStorageDirectory()
+            val stat = StatFs(path.path)
+
+            val totalBytes = stat.blockSizeLong * stat.blockCountLong
+            val availableBytes = stat.blockSizeLong * stat.availableBlocksLong
+            val usedBytes = totalBytes - availableBytes
+
+            val usedSpace = formatFileSize(usedBytes)
+            val totalSpace = formatFileSize(totalBytes)
+
+            storageInfoText.text = getString(R.string.storage_info, usedSpace, totalSpace)
+            Log.d(TAG, "Storage info updated: $usedSpace / $totalSpace")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating storage info", e)
+            storageInfoText.text = getString(R.string.loading_storage_info)
+        }
+    }
+
+    // 格式化文件大小
+    private fun formatFileSize(size: Long): String {
+        val kb = 1024L
+        val mb = kb * 1024
+        val gb = mb * 1024
+        val tb = gb * 1024
+
+        return when {
+            size >= tb -> String.format("%.2f TB", size.toDouble() / tb)
+            size >= gb -> String.format("%.2f GB", size.toDouble() / gb)
+            size >= mb -> String.format("%.2f MB", size.toDouble() / mb)
+            size >= kb -> String.format("%.2f KB", size.toDouble() / kb)
+            else -> "$size B"
+        }
     }
 }
