@@ -112,19 +112,20 @@
     android:layout_height="wrap_content"
     android:layout_gravity="bottom|end"
     android:layout_marginEnd="16dp"
-    android:layout_marginBottom="88dp"
+    android:layout_marginBottom="152dp"
     android:src="@android:drawable/ic_menu_save"
     android:contentDescription="@string/paste"
     app:tint="@android:color/white"
     android:visibility="gone" />
 
-<!-- 新建按钮（始终显示） -->
+<!-- 新建按钮（始终显示，位置上移避免遮挡底部操作栏） -->
 <com.google.android.material.floatingactionbutton.FloatingActionButton
     android:id="@+id/fabAdd"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="bottom|end"
-    android:layout_margin="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="80dp"
     android:src="@android:drawable/ic_input_add"
     android:contentDescription="@string/create_new" />
 

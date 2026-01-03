@@ -94,13 +94,13 @@ class MainActivity : AppCompatActivity() {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
             toolbar.setNavigationOnClickListener {
-                // 获取当前Fragment并尝试返回上级
+                // 获取当前Fragment并处理返回（多选模式下退出多选，否则向上导航）
                 val currentFragment = supportFragmentManager
                     .findFragmentByTag("f${viewPager.currentItem}") as? FileExplorerFragment
-                val handled = currentFragment?.navigateUp() ?: false
+                val handled = currentFragment?.handleBackPress() ?: false
 
                 if (!handled) {
-                    // Fragment无法返回上级，退出应用
+                    // Fragment无法处理，退出应用
                     finish()
                 }
             }
@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
             toolbar.setNavigationOnClickListener {
                 val currentFragment = supportFragmentManager
                     .findFragmentByTag("f${viewPager.currentItem}") as? FileExplorerFragment
-                val handled = currentFragment?.navigateUp() ?: false
+                val handled = currentFragment?.handleBackPress() ?: false
                 if (!handled) {
                     finish()
                 }
@@ -241,14 +241,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        // 获取当前Fragment并尝试返回上级目录
+        // 获取当前Fragment并处理返回键（多选模式下退出多选，否则向上导航）
         val currentFragment = supportFragmentManager
             .findFragmentByTag("f${viewPager.currentItem}") as? FileExplorerFragment
 
-        val handled = currentFragment?.navigateUp() ?: false
+        val handled = currentFragment?.handleBackPress() ?: false
 
         if (!handled) {
-            // Fragment无法返回上级，执行默认返回（退出应用）
+            // Fragment无法处理，执行默认返回（退出应用）
             super.onBackPressed()
         }
     }

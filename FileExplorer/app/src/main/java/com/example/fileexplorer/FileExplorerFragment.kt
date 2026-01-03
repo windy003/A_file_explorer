@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import android.content.Context
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -58,6 +59,8 @@ class FileExplorerFragment : Fragment() {
         private const val TAG = "FileExplorerFragment"
         private const val ARG_TAB_ID = "tab_id"
         private const val KEY_CURRENT_PATH = "current_path"
+        private const val PREFS_NAME = "file_explorer_prefs"
+        private const val KEY_LAST_PATH_PREFIX = "last_path_tab_"
 
         fun newInstance(tabId: Int) = FileExplorerFragment().apply {
             arguments = Bundle().apply {
@@ -568,6 +571,17 @@ class FileExplorerFragment : Fragment() {
     // ==================== 原有方法（部分修改） ====================
 
     private fun getInitialDirectory(): File {
+        // 首先尝试从 SharedPreferences 读取上次保存的路径
+        val savedPath = getSavedPath()
+        if (savedPath != null) {
+            val savedDir = File(savedPath)
+            if (savedDir.exists() && savedDir.isDirectory && savedDir.canRead()) {
+                Log.d(TAG, "Restored last directory for tab $tabId: $savedPath")
+                return savedDir
+            }
+        }
+
+        // 如果没有保存的路径或路径无效，使用默认路径
         return try {
             val externalDir = Environment.getExternalStorageDirectory()
             if (externalDir?.exists() == true && externalDir.canRead()) {
@@ -578,6 +592,30 @@ class FileExplorerFragment : Fragment() {
         } catch (e: Exception) {
             Log.w(TAG, "Could not access external storage, using internal", e)
             requireContext().filesDir
+        }
+    }
+
+    // 从 SharedPreferences 获取保存的路径
+    private fun getSavedPath(): String? {
+        return try {
+            val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            prefs.getString(KEY_LAST_PATH_PREFIX + tabId, null)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading saved path", e)
+            null
+        }
+    }
+
+    // 保存当前路径到 SharedPreferences
+    private fun saveCurrentPath() {
+        currentDirectory?.let { dir ->
+            try {
+                val prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                prefs.edit().putString(KEY_LAST_PATH_PREFIX + tabId, dir.absolutePath).apply()
+                Log.d(TAG, "Saved path for tab $tabId: ${dir.absolutePath}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving path", e)
+            }
         }
     }
 
@@ -603,6 +641,9 @@ class FileExplorerFragment : Fragment() {
 
             // 更新标签页标题为当前文件夹名
             updateTabTitle(directory)
+
+            // 保存当前路径，下次打开时恢复
+            saveCurrentPath()
 
             Log.d(TAG, "Loaded ${fileItems.size} files for tab $tabId")
         } catch (e: Exception) {
@@ -674,6 +715,16 @@ class FileExplorerFragment : Fragment() {
         }
     }
 
+    // 统一处理返回键：多选模式下退出多选，否则向上导航
+    fun handleBackPress(): Boolean {
+        return if (isMultiSelectMode) {
+            exitMultiSelectMode()
+            true
+        } else {
+            navigateUp()
+        }
+    }
+
     // 公开方法：用于从外部（如MainActivity）打开指定文件夹
     fun openFolder(folder: File) {
         if (folder.exists() && folder.isDirectory && folder.canRead()) {
@@ -706,8 +757,14 @@ class FileExplorerFragment : Fragment() {
             "pdf" -> "application/pdf"
             "jpg", "jpeg" -> "image/jpeg"
             "png" -> "image/png"
+            "gif" -> "image/gif"
             "mp4" -> "video/mp4"
             "mp3" -> "audio/mpeg"
+            "apk" -> "application/vnd.android.package-archive"
+            "zip" -> "application/zip"
+            "doc", "docx" -> "application/msword"
+            "xls", "xlsx" -> "application/vnd.ms-excel"
+            "ppt", "pptx" -> "application/vnd.ms-powerpoint"
             else -> "*/*"
         }
     }
