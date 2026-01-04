@@ -21,12 +21,18 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.content.Context
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.math.abs
 
 class FileExplorerFragment : Fragment() {
@@ -34,6 +40,7 @@ class FileExplorerFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var currentPathTextView: TextView
     private lateinit var breadcrumbRecyclerView: RecyclerView
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     // 多选功能UI组件
     private lateinit var multiSelectActionBar: LinearLayout
@@ -93,6 +100,7 @@ class FileExplorerFragment : Fragment() {
             setupBreadcrumbRecyclerView()
             setupMultiSelectActionBar()
             setupDraggableFabs()
+            setupSwipeRefresh()
 
             // 恢复状态或设置初始目录
             if (savedInstanceState != null) {
@@ -118,6 +126,7 @@ class FileExplorerFragment : Fragment() {
         recyclerView = view.findViewById(R.id.recyclerView)
         currentPathTextView = view.findViewById(R.id.tvCurrentPath)
         breadcrumbRecyclerView = view.findViewById(R.id.breadcrumbRecyclerView)
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
 
         // 多选操作栏
         multiSelectActionBar = view.findViewById(R.id.multiSelectActionBar)
@@ -257,6 +266,17 @@ class FileExplorerFragment : Fragment() {
                 else -> false
             }
         }
+    }
+
+    private fun setupSwipeRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            loadFiles()
+        }
+        // 设置刷新指示器颜色
+        swipeRefreshLayout.setColorSchemeResources(
+            R.color.primary,
+            R.color.primary_dark
+        )
     }
 
     // 更新粘贴悬浮按钮的显示状态
@@ -621,13 +641,17 @@ class FileExplorerFragment : Fragment() {
 
     private fun loadFiles() {
         try {
-            val directory = currentDirectory ?: return
+            val directory = currentDirectory ?: run {
+                swipeRefreshLayout.isRefreshing = false
+                return
+            }
             Log.d(TAG, "Loading files from: ${directory.absolutePath} for tab $tabId")
 
             val files = directory.listFiles()
             if (files == null) {
                 Log.w(TAG, "Could not list files in directory: ${directory.absolutePath}")
                 Toast.makeText(requireContext(), "无法访问此目录", Toast.LENGTH_SHORT).show()
+                swipeRefreshLayout.isRefreshing = false
                 return
             }
 
@@ -649,6 +673,9 @@ class FileExplorerFragment : Fragment() {
         } catch (e: Exception) {
             Log.e(TAG, "Error loading files", e)
             Toast.makeText(requireContext(), "无法加载文件: ${e.message}", Toast.LENGTH_SHORT).show()
+        } finally {
+            // 停止刷新动画
+            swipeRefreshLayout.isRefreshing = false
         }
     }
 
@@ -790,6 +817,14 @@ class FileExplorerFragment : Fragment() {
             favoriteItem.isVisible = false
         }
 
+        // 压缩选项：只对文件夹显示
+        val compressItem = popup.menu.findItem(R.id.action_compress)
+        compressItem.isVisible = fileItem.isDirectory
+
+        // 解压选项：只对zip文件显示
+        val extractItem = popup.menu.findItem(R.id.action_extract)
+        extractItem.isVisible = !fileItem.isDirectory && fileItem.file.extension.lowercase() == "zip"
+
         popup.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_open -> {
@@ -816,6 +851,14 @@ class FileExplorerFragment : Fragment() {
                 }
                 R.id.action_paste -> {
                     pasteFile()
+                    true
+                }
+                R.id.action_compress -> {
+                    compressToZip(fileItem.file)
+                    true
+                }
+                R.id.action_extract -> {
+                    extractZip(fileItem.file)
                     true
                 }
                 R.id.action_delete -> {
@@ -1053,5 +1096,117 @@ class FileExplorerFragment : Fragment() {
         super.onResume()
         // 切换标签时更新粘贴按钮状态
         updatePasteButtonVisibility()
+    }
+
+    // ==================== 压缩/解压功能 ====================
+
+    private fun compressToZip(folder: File) {
+        if (!folder.isDirectory) {
+            Toast.makeText(requireContext(), getString(R.string.compress_failed), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val parentDir = folder.parentFile ?: return
+        val zipFile = getUniqueFile(parentDir, "${folder.name}.zip")
+
+        Toast.makeText(requireContext(), getString(R.string.compressing), Toast.LENGTH_SHORT).show()
+
+        Thread {
+            try {
+                ZipOutputStream(BufferedOutputStream(FileOutputStream(zipFile))).use { zos ->
+                    zipFolder(folder, folder.name, zos)
+                }
+
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), getString(R.string.compress_success), Toast.LENGTH_SHORT).show()
+                    loadFiles()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Compress failed", e)
+                // 压缩失败时删除可能创建的不完整文件
+                zipFile.delete()
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), "${getString(R.string.compress_failed)}: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun zipFolder(folder: File, basePath: String, zos: ZipOutputStream) {
+        val files = folder.listFiles() ?: return
+
+        for (file in files) {
+            val entryPath = "$basePath/${file.name}"
+            if (file.isDirectory) {
+                // 添加目录条目
+                zos.putNextEntry(ZipEntry("$entryPath/"))
+                zos.closeEntry()
+                // 递归压缩子目录
+                zipFolder(file, entryPath, zos)
+            } else {
+                // 添加文件
+                zos.putNextEntry(ZipEntry(entryPath))
+                BufferedInputStream(FileInputStream(file)).use { bis ->
+                    bis.copyTo(zos)
+                }
+                zos.closeEntry()
+            }
+        }
+    }
+
+    private fun extractZip(zipFile: File) {
+        if (!zipFile.exists() || zipFile.extension.lowercase() != "zip") {
+            Toast.makeText(requireContext(), getString(R.string.extract_failed), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val parentDir = zipFile.parentFile ?: return
+        // 创建与zip文件同名的文件夹（不含扩展名）
+        val folderName = zipFile.nameWithoutExtension
+        val targetFolder = getUniqueFile(parentDir, folderName)
+
+        Toast.makeText(requireContext(), getString(R.string.extracting), Toast.LENGTH_SHORT).show()
+
+        Thread {
+            try {
+                targetFolder.mkdirs()
+
+                ZipInputStream(BufferedInputStream(FileInputStream(zipFile))).use { zis ->
+                    var entry: ZipEntry? = zis.nextEntry
+                    while (entry != null) {
+                        val entryFile = File(targetFolder, entry.name)
+
+                        // 安全检查：防止zip slip攻击
+                        if (!entryFile.canonicalPath.startsWith(targetFolder.canonicalPath)) {
+                            throw SecurityException("ZIP entry is outside of the target directory")
+                        }
+
+                        if (entry.isDirectory) {
+                            entryFile.mkdirs()
+                        } else {
+                            // 确保父目录存在
+                            entryFile.parentFile?.mkdirs()
+                            BufferedOutputStream(FileOutputStream(entryFile)).use { bos ->
+                                zis.copyTo(bos)
+                            }
+                        }
+                        zis.closeEntry()
+                        entry = zis.nextEntry
+                    }
+                }
+
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), getString(R.string.extract_success), Toast.LENGTH_SHORT).show()
+                    loadFiles()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Extract failed", e)
+                // 解压失败时删除可能创建的不完整目录
+                deleteFileRecursive(targetFolder)
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), "${getString(R.string.extract_failed)}: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
     }
 }

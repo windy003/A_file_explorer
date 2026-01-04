@@ -3,7 +3,7 @@
     <item
         android:id="@+id/action_open"
         android:title="@string/open" />
-    
+
     <item
         android:id="@+id/action_favorite"
         android:title="@string/add_to_favorites" />
@@ -15,11 +15,19 @@
     <item
         android:id="@+id/action_paste"
         android:title="@string/paste" />
-    
+
     <item
         android:id="@+id/action_rename"
         android:title="@string/rename" />
-    
+
+    <item
+        android:id="@+id/action_compress"
+        android:title="@string/compress_to_zip" />
+
+    <item
+        android:id="@+id/action_extract"
+        android:title="@string/extract_to_folder" />
+
     <item
         android:id="@+id/action_delete"
         android:title="@string/delete" />

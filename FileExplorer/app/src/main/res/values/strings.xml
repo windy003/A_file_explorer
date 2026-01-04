@@ -65,4 +65,14 @@
     <!-- 存储空间信息相关 -->
     <string name="loading_storage_info">加载存储信息中…</string>
     <string name="storage_info">已占用 %s / 总共 %s</string>
+
+    <!-- 压缩/解压功能相关 -->
+    <string name="compress_to_zip">压缩为ZIP</string>
+    <string name="extract_to_folder">解压到文件夹</string>
+    <string name="compressing">正在压缩…</string>
+    <string name="extracting">正在解压…</string>
+    <string name="compress_success">压缩成功</string>
+    <string name="compress_failed">压缩失败</string>
+    <string name="extract_success">解压成功</string>
+    <string name="extract_failed">解压失败</string>
 </resources>
