@@ -28,6 +28,13 @@
             android:name=".SimpleMainActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".TextEditorActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="adjustResize" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

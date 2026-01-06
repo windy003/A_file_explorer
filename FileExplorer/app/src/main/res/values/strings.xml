@@ -75,4 +75,20 @@
     <string name="compress_failed">压缩失败</string>
     <string name="extract_success">解压成功</string>
     <string name="extract_failed">解压失败</string>
+
+    <!-- 文本编辑器功能相关 -->
+    <string name="text_editor">文本编辑器</string>
+    <string name="save">保存</string>
+    <string name="open_with_other_app">用其他应用打开</string>
+    <string name="unsaved_changes">您有未保存的更改</string>
+    <string name="save_changes_title">保存更改？</string>
+    <string name="save_changes_message">文件有未保存的更改，是否保存？</string>
+    <string name="save_changes">保存</string>
+    <string name="discard_changes">不保存</string>
+    <string name="file_saved_successfully">文件已保存</string>
+    <string name="file_save_failed">保存失败：%s</string>
+    <string name="file_read_failed">无法读取文件：%s</string>
+    <string name="file_not_text">此文件不是文本文件</string>
+    <string name="file_size_limit">文件过大（超过5MB），无法编辑</string>
+    <string name="loading_file">正在加载文件…</string>
 </resources>

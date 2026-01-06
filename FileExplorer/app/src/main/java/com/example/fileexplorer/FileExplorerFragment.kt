@@ -763,6 +763,36 @@ class FileExplorerFragment : Fragment() {
 
     private fun openFile(file: File) {
         try {
+            // 检查是否是文本文件
+            if (isTextFile(file)) {
+                // 使用内置文本编辑器打开
+                val intent = Intent(requireContext(), TextEditorActivity::class.java)
+                intent.putExtra("file_path", file.absolutePath)
+                startActivity(intent)
+            } else {
+                // 使用系统默认应用打开
+                val intent = Intent(Intent.ACTION_VIEW)
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    requireContext(),
+                    "${requireContext().applicationContext.packageName}.fileprovider",
+                    file
+                )
+                intent.setDataAndType(uri, getMimeType(file))
+                intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                startActivity(intent)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "无法打开文件: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun isTextFile(file: File): Boolean {
+        val extension = file.extension.lowercase()
+        return extension in listOf("txt", "log")
+    }
+
+    private fun openFileWithOtherApp(file: File) {
+        try {
             val intent = Intent(Intent.ACTION_VIEW)
             val uri = androidx.core.content.FileProvider.getUriForFile(
                 requireContext(),
@@ -771,7 +801,7 @@ class FileExplorerFragment : Fragment() {
             )
             intent.setDataAndType(uri, getMimeType(file))
             intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-            startActivity(intent)
+            startActivity(Intent.createChooser(intent, getString(R.string.open_with_other_app)))
         } catch (e: Exception) {
             Toast.makeText(requireContext(), "无法打开文件: ${e.message}", Toast.LENGTH_SHORT).show()
         }
@@ -863,6 +893,10 @@ class FileExplorerFragment : Fragment() {
                 }
                 R.id.action_delete -> {
                     showDeleteDialog(fileItem)
+                    true
+                }
+                R.id.action_open_with -> {
+                    openFileWithOtherApp(fileItem.file)
                     true
                 }
                 else -> false
