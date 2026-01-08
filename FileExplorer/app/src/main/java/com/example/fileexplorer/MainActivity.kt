@@ -45,6 +45,8 @@ class MainActivity : AppCompatActivity() {
         private const val TAG = "MainActivity"
         private const val STORAGE_PERMISSION_CODE = 100
         private const val MANAGE_STORAGE_PERMISSION_CODE = 101
+        private const val PREFS_NAME = "file_explorer_prefs"
+        private const val KEY_LAST_TAB = "last_tab_index"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -133,6 +135,13 @@ class MainActivity : AppCompatActivity() {
             tab.text = "..."
         }
         tabLayoutMediator.attach()
+
+        // 恢复上次退出时的标签页
+        val savedTabIndex = getSavedTabIndex()
+        if (savedTabIndex in 0 until pagerAdapter.itemCount) {
+            viewPager.setCurrentItem(savedTabIndex, false)
+            Log.d(TAG, "Restored to tab index: $savedTabIndex")
+        }
 
         Log.d(TAG, "ViewPager setup successfully")
     }
@@ -335,5 +344,32 @@ class MainActivity : AppCompatActivity() {
             size >= kb -> String.format("%.2f KB", size.toDouble() / kb)
             else -> "$size B"
         }
+    }
+
+    // 保存当前标签索引
+    private fun saveCurrentTabIndex() {
+        try {
+            val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            prefs.edit().putInt(KEY_LAST_TAB, viewPager.currentItem).apply()
+            Log.d(TAG, "Saved tab index: ${viewPager.currentItem}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving tab index", e)
+        }
+    }
+
+    // 获取保存的标签索引
+    private fun getSavedTabIndex(): Int {
+        return try {
+            val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            prefs.getInt(KEY_LAST_TAB, 0) // 默认返回第一个标签
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting saved tab index", e)
+            0
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveCurrentTabIndex()
     }
 }
