@@ -20,6 +20,9 @@ import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import android.content.Context
@@ -175,7 +178,10 @@ class FileExplorerFragment : Fragment() {
         }
 
         breadcrumbRecyclerView.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = FlexboxLayoutManager(requireContext()).apply {
+                flexDirection = FlexDirection.ROW
+                flexWrap = FlexWrap.WRAP
+            }
             adapter = breadcrumbAdapter
         }
     }
@@ -702,10 +708,6 @@ class FileExplorerFragment : Fragment() {
         }
 
         breadcrumbAdapter.updateBreadcrumbs(breadcrumbs)
-
-        if (breadcrumbs.isNotEmpty()) {
-            breadcrumbRecyclerView.scrollToPosition(breadcrumbs.size - 1)
-        }
     }
 
     private fun updateTabTitle(directory: File) {

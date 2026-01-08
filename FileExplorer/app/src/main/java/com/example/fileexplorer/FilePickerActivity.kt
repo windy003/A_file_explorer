@@ -16,6 +16,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.flexbox.FlexDirection
+import com.google.android.flexbox.FlexWrap
+import com.google.android.flexbox.FlexboxLayoutManager
 import java.io.File
 
 /**
@@ -128,7 +131,10 @@ class FilePickerActivity : AppCompatActivity() {
         }
 
         breadcrumbRecyclerView.apply {
-            layoutManager = LinearLayoutManager(this@FilePickerActivity, LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = FlexboxLayoutManager(this@FilePickerActivity).apply {
+                flexDirection = FlexDirection.ROW
+                flexWrap = FlexWrap.WRAP
+            }
             adapter = breadcrumbAdapter
         }
     }
@@ -256,10 +262,6 @@ class FilePickerActivity : AppCompatActivity() {
         }
 
         breadcrumbAdapter.updateBreadcrumbs(breadcrumbs)
-
-        if (breadcrumbs.isNotEmpty()) {
-            breadcrumbRecyclerView.scrollToPosition(breadcrumbs.size - 1)
-        }
     }
 
     private fun navigateToDirectory(directory: File) {

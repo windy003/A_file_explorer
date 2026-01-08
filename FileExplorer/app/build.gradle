@@ -10,7 +10,7 @@ android {
         minSdk 24
         targetSdk 33
         versionCode 1
-        versionName "2026/1/8-2"
+        versionName "2026/1/8-3"
     }
 
     buildTypes {
@@ -49,4 +49,7 @@ dependencies {
 
     // SwipeRefreshLayout for pull-to-refresh
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+    // FlexboxLayout for breadcrumb wrap
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
 }
